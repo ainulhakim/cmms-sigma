@@ -1,0 +1,45 @@
+name: cmms_sigma
+description: CMMS SIGMA - Android Computerized Maintenance Management System
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase for backend
+  supabase_flutter: ^2.5.0
+
+  # Local database
+  sqflite: ^2.3.0
+
+  # File & storage
+  path_provider: ^2.1.0
+  image_picker: ^1.0.4
+
+  # Utilities
+  intl: ^0.19.0
+  connectivity_plus: ^5.0.1
+
+  # State management
+  provider: ^6.1.1
+
+  # QR Code scanning
+  qr_code_scanner: ^1.0.1
+
+  # Permissions
+  permission_handler: ^11.1.0
+
+  # Local notifications
+  flutter_local_notifications: ^17.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
