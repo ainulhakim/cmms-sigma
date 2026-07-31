@@ -17,6 +17,9 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  /// Alias yang dipakai screens.
+  String? get error => _errorMessage;
+
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isAdmin => _user?.isAdmin ?? false;
   bool get isSupervisor => _user?.isSupervisor ?? false;

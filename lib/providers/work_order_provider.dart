@@ -29,6 +29,12 @@ class WorkOrderProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  /// Alias yang dipakai screens.
+  String? get error => _errorMessage;
+
+  int _selectedTabIndex = 0;
+  int get selectedTabIndex => _selectedTabIndex;
+
   String? _statusFilter;
   String? get statusFilter => _statusFilter;
 
@@ -412,10 +418,51 @@ class WorkOrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Select work order for detail
-  void selectWorkOrder(WorkOrder? workOrder) {
-    _selectedWorkOrder = workOrder;
+  /// Select work order for detail (menerima ID string)
+  Future<void> selectWorkOrder(String id) async {
+    _selectedWorkOrder = null;
+    await loadWorkOrderDetail(id);
+  }
+
+  /// Set tab index pada work order list
+  void setSelectedTabIndex(int index) {
+    _selectedTabIndex = index;
+    switch (index) {
+      case 1:
+        _statusFilter = 'IN_PROGRESS';
+        break;
+      case 2:
+        _statusFilter = 'COMPLETED';
+        break;
+      default:
+        _statusFilter = null;
+    }
+    _currentPage = 0;
     notifyListeners();
+  }
+
+  /// Start work order (OPEN -> IN_PROGRESS)
+  Future<bool> startWorkOrder(String id) async {
+    return updateStatus(id, 'IN_PROGRESS');
+  }
+
+  /// Complete work order (IN_PROGRESS -> COMPLETED)
+  Future<bool> completeWorkOrder(String id,
+      [Map<String, dynamic>? data]) async {
+    if (data != null && data.isNotEmpty) {
+      await updateWorkOrder(id, data);
+    }
+    return updateStatus(id, 'COMPLETED');
+  }
+
+  /// Verify work order (COMPLETED -> VERIFIED)
+  Future<bool> verifyWorkOrder(String id, String notes) async {
+    await updateWorkOrder(id, {
+      'supervisor_notes': notes,
+      'verified_by': _supabase.currentUser?.id,
+      'verified_at': DateTime.now().toIso8601String(),
+    });
+    return updateStatus(id, 'VERIFIED');
   }
 
   /// Get filtered list

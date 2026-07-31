@@ -52,9 +52,7 @@ class SparePart {
       supplier: json['supplier'] as String? ?? '',
       unitPrice: (json['unit_price'] as num?)?.toDouble() ?? 0,
       photoUrl: json['photo_url'] as String? ?? '',
-      compatibleMachines: json['compatible_machines'] != null
-          ? List<String>.from(json['compatible_machines'])
-          : [],
+      compatibleMachines: _parseCompatibleMachines(json['compatible_machines']),
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
@@ -83,6 +81,17 @@ class SparePart {
       'compatible_machines': compatibleMachines,
       'is_active': isActive,
     };
+  }
+
+  static List<String> _parseCompatibleMachines(dynamic value) {
+    if (value is List) return List<String>.from(value);
+    if (value is String) {
+      return value
+          .split(',')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return [];
   }
 
   Map<String, dynamic> toMap() {
@@ -122,14 +131,7 @@ class SparePart {
       supplier: map['supplier'] as String? ?? '',
       unitPrice: (map['unit_price'] as num?)?.toDouble() ?? 0,
       photoUrl: map['photo_url'] as String? ?? '',
-      compatibleMachines: map['compatible_machines'] is String
-          ? (map['compatible_machines'] as String)
-              .split(',')
-              .where((s) => s.isNotEmpty)
-              .toList()
-          : (map['compatible_machines'] is List
-              ? List<String>.from(map['compatible_machines'])
-              : []),
+      compatibleMachines: _parseCompatibleMachines(map['compatible_machines']),
       isActive: (map['is_active'] == 1 || map['is_active'] == true),
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'] as String)

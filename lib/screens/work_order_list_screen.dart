@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/work_order_provider.dart';
 import '../config/theme.dart';
+import '../models/work_order.dart';
 import '../models/work_order_model.dart';
 
 class WorkOrderListScreen extends StatefulWidget {
@@ -142,7 +143,7 @@ class _WorkOrderListScreenState extends State<WorkOrderListScreen>
 }
 
 class _WorkOrderCard extends StatelessWidget {
-  final WorkOrderModel workOrder;
+  final WorkOrder workOrder;
 
   const _WorkOrderCard({required this.workOrder});
 
@@ -209,7 +210,7 @@ class _WorkOrderCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    workOrder.machineName,
+                    workOrder.machineName ?? '',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),

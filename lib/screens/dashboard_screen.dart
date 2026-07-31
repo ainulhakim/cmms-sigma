@@ -106,6 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardContent() {
+    final theme = Theme.of(context);
     return Consumer<DashboardProvider>(
       builder: (context, dashboard, _) {
         if (dashboard.isLoading && dashboard.todayScheduleCount == 0) {
@@ -230,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: 'WO-2026-0003 selesai',
                 subtitle: 'Mesin CNC Milling - Kalibrasi Sumbu X',
                 time: '2 jam lalu',
-                icon: Icons.check_circle_filled,
+                icon: Icons.check_circle,
                 iconColor: Colors.green,
               ),
               const SizedBox(height: 8),
@@ -238,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: 'WO-2026-0004 dibuat',
                 subtitle: 'Kompresor Udara - Overhaul Kompresor',
                 time: '1 hari lalu',
-                icon: Icons.add_circle_filled,
+                icon: Icons.add_circle,
                 iconColor: Colors.orange,
               ),
             ],

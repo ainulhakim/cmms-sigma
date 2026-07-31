@@ -1,3 +1,5 @@
+import 'work_order_model.dart';
+
 class WorkOrder {
   final String id;
   final String workOrderNumber;
@@ -288,4 +290,33 @@ class WorkOrder {
   @override
   String toString() =>
       'WorkOrder(id: $id, number: $workOrderNumber, status: $status)';
+
+  // ── Alias kompatibilitas (dipakai screens yang mengasumsikan
+  //    field bergaya WorkOrderModel) ──────────────────────────────────────
+
+  String get woNumber => workOrderNumber;
+
+  String get title => machineName ?? problemDescription;
+
+  String get description => problemDescription;
+
+  DateTime? get scheduledStart => scheduledDate;
+
+  DateTime? get scheduledEnd => scheduledDate;
+
+  String? get assignedToName => assignedUserName;
+
+  String? get assignedTo => assignedUserId;
+
+  /// Tipe pekerjaan (BREAKDOWN untuk kerusakan, selain itu rutin).
+  String get type =>
+      problemDescription.toLowerCase().contains('breakdown') ||
+              rootCause.toLowerCase().contains('breakdown') ||
+              actionTaken.toLowerCase().contains('breakdown')
+          ? 'BREAKDOWN'
+          : 'ROUTINE';
+
+  List<ChecklistItem> checklistItems = [];
+
+  List<SparePartUsage> spareParts = [];
 }

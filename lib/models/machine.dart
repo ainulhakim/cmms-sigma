@@ -58,9 +58,7 @@ class Machine {
           : null,
       status: json['status'] as String? ?? 'active',
       photoUrl: json['photo_url'] as String? ?? '',
-      specifications: json['specifications'] is Map
-          ? Map<String, dynamic>.from(json['specifications'])
-          : {},
+      specifications: _parseSpecifications(json['specifications']),
       operatingHours: json['operating_hours'] as int? ?? 0,
       productionCount: json['production_count'] as int? ?? 0,
       notes: json['notes'] as String? ?? '',
@@ -94,6 +92,12 @@ class Machine {
       'production_count': productionCount,
       'notes': notes,
     };
+  }
+
+  static Map<String, dynamic> _parseSpecifications(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return {};
   }
 
   Map<String, dynamic> toMap() {
@@ -198,4 +202,17 @@ class Machine {
   @override
   String toString() =>
       'Machine(id: $id, code: $machineCode, name: $machineName, status: $status)';
+
+  // ── Alias kompatibilitas (dipakai screens yang mengasumsikan
+  //    field bergaya MachineModel) ─────────────────────────────────────────
+
+  String get name => machineName;
+
+  String get code => machineCode;
+
+  String? get description => notes.isEmpty ? null : notes;
+
+  DateTime? get lastMaintenance => installationDate;
+
+  DateTime? get nextMaintenance => null;
 }

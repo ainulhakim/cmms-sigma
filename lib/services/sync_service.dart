@@ -49,13 +49,13 @@ class SyncService {
   Future<void> initialize() async {
     // Check initial connectivity
     final result = await _connectivity.checkConnectivity();
-    _isOnline = !result.contains(ConnectivityResult.none);
+    _isOnline = result != ConnectivityResult.none;
 
     // Listen for connectivity changes
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      (List<ConnectivityResult> results) {
+      (ConnectivityResult result) {
         final wasOffline = !_isOnline;
-        _isOnline = !results.contains(ConnectivityResult.none);
+        _isOnline = result != ConnectivityResult.none;
 
         if (_isOnline && wasOffline) {
           // Came back online - trigger sync

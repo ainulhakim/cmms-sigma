@@ -97,7 +97,7 @@ class ProfileScreen extends StatelessWidget {
 
                       // Email
                       Text(
-                        user.email,
+                        user.email ?? '',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -166,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
                       _ProfileInfoRow(
                         icon: Icons.email_outlined,
                         label: 'Email',
-                        value: user.email,
+                        value: user.email ?? '',
                       ),
                       const Divider(height: 16),
                       _ProfileInfoRow(

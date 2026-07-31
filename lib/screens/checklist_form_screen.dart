@@ -129,7 +129,7 @@ class _ChecklistFormScreenState extends State<ChecklistFormScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          wo.machineName,
+                          wo.machineName ?? '',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),

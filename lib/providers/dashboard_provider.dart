@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/database_service.dart';
+import '../models/work_order_model.dart';
 
 class DashboardProvider extends ChangeNotifier {
   final SupabaseService _supabase = SupabaseService();
@@ -12,6 +14,9 @@ class DashboardProvider extends ChangeNotifier {
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  /// Alias yang dipakai screens.
+  String? get error => _errorMessage;
 
   // KPI values
   int _totalMachines = 0;
@@ -40,6 +45,27 @@ class DashboardProvider extends ChangeNotifier {
 
   int _pendingBreakdowns = 0;
   int get pendingBreakdowns => _pendingBreakdowns;
+
+  /// Jadwal work order hari ini (dipakai dashboard_screen).
+  int get todayScheduleCount => _openWorkOrders;
+
+  /// Work order tertunda (dipakai dashboard_screen).
+  int get pendingWOCount => _openWorkOrders + _inProgressWorkOrders;
+
+  /// Total mesin (alias, dipakai dashboard_screen).
+  int get totalMachineCount => _totalMachines;
+
+  /// Kirim laporan breakdown (dipakai breakdown_report_screen).
+  Future<bool> submitBreakdownReport(BreakdownReportModel report) async {
+    try {
+      await _supabase.createBreakdownReport(report.toMap());
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
 
   int _lowStockParts = 0;
   int get lowStockParts => _lowStockParts;
@@ -106,9 +132,10 @@ class DashboardProvider extends ChangeNotifier {
       // Machines under maintenance
       final underMaint = await _supabase.client
           .from('machines')
-          .select('id', count: CountOption.exact)
-          .eq('status', 'under_maintenance');
-      _machinesUnderMaintenance = underMaint.count ?? 0;
+          .select('id')
+          .eq('status', 'under_maintenance')
+          .count(CountOption.exact);
+      _machinesUnderMaintenance = underMaint.count;
 
       // Overdue work orders (scheduled before today, not completed)
       final yesterday = DateTime.now()
@@ -117,24 +144,28 @@ class DashboardProvider extends ChangeNotifier {
           .split('T')[0];
       final overdue = await _supabase.client
           .from('work_orders')
-          .select('id', count: CountOption.exact)
+          .select('id')
           .lt('scheduled_date', yesterday)
-          .notInFilter('status', ['COMPLETED', 'VERIFIED', 'CANCELLED']);
-      _overdueWorkOrders = overdue.count ?? 0;
+          .inFilter(
+              'status', ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'PAUSED'])
+          .count(CountOption.exact);
+      _overdueWorkOrders = overdue.count;
 
       // Unresolved breakdowns
       final breakdowns = await _supabase.client
           .from('breakdown_reports')
-          .select('id', count: CountOption.exact)
-          .eq('is_resolved', false);
-      _pendingBreakdowns = breakdowns.count ?? 0;
+          .select('id')
+          .eq('is_resolved', false)
+          .count(CountOption.exact);
+      _pendingBreakdowns = breakdowns.count;
 
       // Low stock spare parts
       final lowStock = await _supabase.client
           .from('spare_parts')
-          .select('id', count: CountOption.exact)
-          .lte('current_stock', _supabase.client.from('spare_parts')); // simplified
-      _lowStockParts = lowStock.count ?? 0;
+          .select('id')
+          .lte('current_stock', 10)
+          .count(CountOption.exact);
+      _lowStockParts = lowStock.count;
 
       // Overdue percentage
       if (_openWorkOrders + _inProgressWorkOrders + _overdueWorkOrders > 0) {
@@ -176,7 +207,7 @@ class DashboardProvider extends ChangeNotifier {
       _monthlyWorkOrders = monthlyMap.entries
           .map((e) => {'month': e.key, 'count': e.value})
           .toList()
-        ..sort((a, b) => a['month'].compareTo(b['month']));
+        ..sort((a, b) => (a['month'] as String).compareTo(b['month'] as String));
 
       // Work orders by status
       final statusMap = <String, int>{};

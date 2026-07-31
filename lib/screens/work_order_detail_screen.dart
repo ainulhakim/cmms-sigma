@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/work_order_provider.dart';
 import '../providers/auth_provider.dart';
 import '../config/theme.dart';
+import '../models/work_order.dart';
 import '../models/work_order_model.dart';
 
 class WorkOrderDetailScreen extends StatefulWidget {
@@ -383,7 +384,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     );
   }
 
-  Widget _buildStartButton(WorkOrderProvider provider, WorkOrderModel wo) {
+  Widget _buildStartButton(WorkOrderProvider provider, WorkOrder wo) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -413,7 +414,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     );
   }
 
-  Widget _buildCompleteSection(WorkOrderProvider provider, WorkOrderModel wo) {
+  Widget _buildCompleteSection(WorkOrderProvider provider, WorkOrder wo) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -502,7 +503,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
 // ============ Sub-widgets ============
 
 class _HeaderCard extends StatelessWidget {
-  final WorkOrderModel workOrder;
+  final WorkOrder workOrder;
 
   const _HeaderCard({required this.workOrder});
 
@@ -645,7 +646,7 @@ class _SectionCard extends StatelessWidget {
 class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
+  final String? value;
 
   const _DetailRow({
     required this.icon,
@@ -672,7 +673,7 @@ class _DetailRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            value,
+            value ?? '-',
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w500,
             ),

@@ -40,9 +40,7 @@ class UserModel {
       employeeCode: json['employee_code'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? true,
       fcmToken: json['fcm_token'] as String?,
-      preferences: json['preferences'] is Map
-          ? Map<String, dynamic>.from(json['preferences'])
-          : {},
+      preferences: _parsePreferences(json['preferences']),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
@@ -50,6 +48,18 @@ class UserModel {
           ? DateTime.tryParse(json['updated_at'] as String)
           : null,
     );
+  }
+
+  static Map<String, dynamic> _parsePreferences(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is String) {
+      try {
+        final decoded = jsonDecode(value);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return {};
   }
 
   Map<String, dynamic> toJson() {
@@ -95,11 +105,7 @@ class UserModel {
       employeeCode: map['employee_code'] as String? ?? '',
       isActive: (map['is_active'] == 1 || map['is_active'] == true),
       fcmToken: map['fcm_token'] as String?,
-      preferences: map['preferences'] is String
-          ? jsonDecode(map['preferences']) as Map<String, dynamic>?
-          : (map['preferences'] is Map
-              ? Map<String, dynamic>.from(map['preferences'])
-              : {}),
+      preferences: _parsePreferences(map['preferences']),
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'] as String)
           : null,
@@ -142,6 +148,25 @@ class UserModel {
   bool get isAdmin => role == 'admin';
   bool get isSupervisor => role == 'admin' || role == 'supervisor';
   bool get isTechnician => role == 'admin' || role == 'supervisor' || role == 'technician';
+
+  /// Alias nama lengkap (dipakai screens).
+  String get name => fullName.isNotEmpty ? fullName : (email ?? 'User');
+
+  /// Label role yang ramah tampilan.
+  String get roleLabel {
+    switch (role) {
+      case 'admin':
+        return 'Admin';
+      case 'supervisor':
+        return 'Supervisor';
+      case 'technician':
+        return 'Teknisi';
+      case 'viewer':
+        return 'Viewer';
+      default:
+        return role;
+    }
+  }
 
   @override
   String toString() => 'UserModel(id: $id, fullName: $fullName, role: $role)';

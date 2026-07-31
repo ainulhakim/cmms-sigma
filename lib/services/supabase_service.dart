@@ -95,12 +95,12 @@ class SupabaseService {
   Future<List<Machine>> getMachines({String? status}) async {
     var query = client
         .from('machines')
-        .select('*, machine_categories!left(name, icon, color)')
-        .order('created_at', ascending: false);
+        .select('*, machine_categories!left(name, icon, color)');
     if (status != null) {
       query = query.eq('status', status);
     }
-    final response = await query;
+    final response =
+        await query.order('created_at', ascending: false);
     return (response as List)
         .map((json) => Machine.fromJson(json as Map<String, dynamic>))
         .toList();
@@ -144,12 +144,12 @@ class SupabaseService {
       {String? machineId}) async {
     var query = client
         .from('maintenance_plans')
-        .select('*, machines!left(machine_name, machine_code)')
-        .order('created_at', ascending: false);
+        .select('*, machines!left(machine_name, machine_code)');
     if (machineId != null) {
       query = query.eq('machine_id', machineId);
     }
-    final response = await query;
+    final response =
+        await query.order('created_at', ascending: false);
     return (response as List)
         .map((json) =>
             MaintenancePlan.fromJson(json as Map<String, dynamic>))
@@ -210,8 +210,7 @@ class SupabaseService {
           *,
           machines!inner(machine_name, machine_code),
           assigned_profile:profiles!work_orders_assigned_user_id_fkey(full_name)
-        ''')
-        .order('created_at', ascending: false);
+        ''');
 
     if (status != null) query = query.eq('status', status);
     if (assignedUserId != null) {
@@ -220,7 +219,9 @@ class SupabaseService {
     if (machineId != null) query = query.eq('machine_id', machineId);
     if (priority != null) query = query.eq('priority', priority);
 
-    final response = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+    final response = await query
+        .order('created_at', ascending: false)
+        .range(page * pageSize, (page + 1) * pageSize - 1);
     final results = response as List;
     return results.map((json) {
       final wo = WorkOrder.fromJson(json as Map<String, dynamic>);
@@ -349,11 +350,11 @@ class SupabaseService {
           *,
           machines!inner(machine_name, machine_code),
           reporter:profiles!breakdown_reports_reported_by_fkey(full_name)
-        ''')
-        .order('breakdown_time', ascending: false);
+        ''');
     if (machineId != null) query = query.eq('machine_id', machineId);
     if (isResolved != null) query = query.eq('is_resolved', isResolved);
-    final response = await query;
+    final response =
+        await query.order('breakdown_time', ascending: false);
     return (response as List).map((json) {
       final br = BreakdownReport.fromJson(json as Map<String, dynamic>);
       final machineJson = json['machines'] as Map<String, dynamic>?;
@@ -384,14 +385,11 @@ class SupabaseService {
   // ============================================================
 
   Future<List<SparePart>> getSpareParts({bool? lowStockOnly}) async {
-    var query = client
-        .from('spare_parts')
-        .select()
-        .order('part_name');
+    var query = client.from('spare_parts').select();
     if (lowStockOnly == true) {
-      query = query.lte('current_stock', client.from('spare_parts').toString()); //lte handled differently
+      query = query.lte('current_stock', 10);
     }
-    final response = await query;
+    final response = await query.order('part_name');
     return (response as List)
         .map((json) => SparePart.fromJson(json as Map<String, dynamic>))
         .toList();
@@ -419,14 +417,13 @@ class SupabaseService {
 
   Future<List<NotificationModel>> getNotifications(
       {bool? unreadOnly, int page = 0, int pageSize = 20}) async {
-    var query = client
-        .from('notifications')
-        .select()
-        .order('created_at', ascending: false);
+    var query = client.from('notifications').select();
     if (unreadOnly == true) {
       query = query.eq('is_read', false);
     }
-    final response = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+    final response = await query
+        .order('created_at', ascending: false)
+        .range(page * pageSize, (page + 1) * pageSize - 1);
     return (response as List)
         .map((json) =>
             NotificationModel.fromJson(json as Map<String, dynamic>))
@@ -436,9 +433,10 @@ class SupabaseService {
   Future<int> getUnreadNotificationCount() async {
     final response = await client
         .from('notifications')
-        .select('id', count: CountOption.exact)
-        .eq('is_read', false);
-    return response.count ?? 0;
+        .select('id')
+        .eq('is_read', false)
+        .count(CountOption.exact);
+    return response.count;
   }
 
   Future<void> markNotificationRead(String id) async {
@@ -468,38 +466,78 @@ class SupabaseService {
       completedToday,
       unreadNotifications,
     ] = await Future.wait([
-      client.from('machines').select('id', count: CountOption.exact),
+      client.from('machines').select('id').count(CountOption.exact),
       client
           .from('machines')
-          .select('id', count: CountOption.exact)
-          .eq('status', 'active'),
+          .select('id')
+          .eq('status', 'active')
+          .count(CountOption.exact),
       client
           .from('work_orders')
-          .select('id', count: CountOption.exact)
-          .inFilter('status', ['OPEN', 'ASSIGNED']),
+          .select('id')
+          .inFilter('status', ['OPEN', 'ASSIGNED'])
+          .count(CountOption.exact),
       client
           .from('work_orders')
-          .select('id', count: CountOption.exact)
-          .eq('status', 'IN_PROGRESS'),
+          .select('id')
+          .eq('status', 'IN_PROGRESS')
+          .count(CountOption.exact),
       client
           .from('work_orders')
-          .select('id', count: CountOption.exact)
+          .select('id')
           .eq('status', 'COMPLETED')
-          .gte('completed_at', DateTime.now().subtract(const Duration(days: 1)).toIso8601String()),
+          .gte('completed_at', DateTime.now().subtract(const Duration(days: 1)).toIso8601String())
+          .count(CountOption.exact),
       client
           .from('notifications')
-          .select('id', count: CountOption.exact)
-          .eq('is_read', false),
+          .select('id')
+          .eq('is_read', false)
+          .count(CountOption.exact),
     ]);
 
     return {
-      'totalMachines': totalMachines.count ?? 0,
-      'activeMachines': activeMachines.count ?? 0,
-      'openWorkOrders': openWorkOrders.count ?? 0,
-      'inProgressWorkOrders': inProgressWorkOrders.count ?? 0,
-      'completedToday': completedToday.count ?? 0,
-      'unreadNotifications': unreadNotifications.count ?? 0,
+      'totalMachines': totalMachines.count,
+      'activeMachines': activeMachines.count,
+      'openWorkOrders': openWorkOrders.count,
+      'inProgressWorkOrders': inProgressWorkOrders.count,
+      'completedToday': completedToday.count,
+      'unreadNotifications': unreadNotifications.count,
     };
+  }
+
+  Future<List<Map<String, dynamic>>> getMaintenanceHistory(
+      String machineId) async {
+    final response = await client
+        .from('work_orders')
+        .select('''
+          id, work_order_number, machine_id, maintenance_type, status,
+          completed_at, started_at, technician_notes,
+          assigned_profile:profiles!work_orders_assigned_user_id_fkey(full_name)
+        ''')
+        .eq('machine_id', machineId)
+        .eq('status', 'COMPLETED')
+        .order('completed_at', ascending: false);
+    return (response as List)
+        .map((json) {
+          final map = Map<String, dynamic>.from(json as Map);
+          map['wo_number'] = map['work_order_number'];
+          map['type'] = map['maintenance_type'];
+          map['technician_name'] = map['assigned_profile'] is Map
+              ? (map['assigned_profile'] as Map)['full_name']
+              : null;
+          final started = map['started_at'] != null
+              ? DateTime.tryParse(map['started_at'] as String)
+              : null;
+          final completed = map['completed_at'] != null
+              ? DateTime.tryParse(map['completed_at'] as String)
+              : null;
+          if (started != null && completed != null) {
+            map['duration_minutes'] =
+                completed.difference(started).inMinutes;
+          }
+          return map;
+        })
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> getWorkOrdersByStatus() async {

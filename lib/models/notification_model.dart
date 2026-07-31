@@ -45,13 +45,17 @@ class NotificationModel {
           : null,
       actionUrl: json['action_url'] as String? ?? '',
       imageUrl: json['image_url'] as String? ?? '',
-      data: json['data'] is Map
-          ? Map<String, dynamic>.from(json['data'])
-          : {},
+      data: _parseData(json['data']),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
     );
+  }
+
+  static Map<String, dynamic> _parseData(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return {};
   }
 
   Map<String, dynamic> toJson() {

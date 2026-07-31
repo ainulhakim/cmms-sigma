@@ -12,6 +12,9 @@ class MachineProvider extends ChangeNotifier {
   List<Machine> _machines = [];
   List<Machine> get machines => _machines;
 
+  /// Alias yang dipakai screens.
+  List<Machine> get allMachines => _machines;
+
   Machine? _selectedMachine;
   Machine? get selectedMachine => _selectedMachine;
 
@@ -20,6 +23,9 @@ class MachineProvider extends ChangeNotifier {
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  /// Alias yang dipakai screens.
+  String? get error => _errorMessage;
 
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
@@ -190,9 +196,24 @@ class MachineProvider extends ChangeNotifier {
     }
   }
 
-  /// Select a machine for detail view
-  void selectMachine(Machine? machine) {
-    _selectedMachine = machine;
+  /// Select a machine for detail view (menerima ID string)
+  Future<void> selectMachine(String id) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      if (_syncService.isOnline) {
+        _selectedMachine = await _supabase.getMachine(id);
+      } else {
+        final localData = await _db.getById('machines', id);
+        if (localData != null) {
+          _selectedMachine = Machine.fromMap(localData);
+        }
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+    _isLoading = false;
     notifyListeners();
   }
 

@@ -169,6 +169,43 @@ class AppTheme {
 
   // ── Theme Data ────────────────────────────────────────────────────────
 
+  /// Returns the application's dark [ThemeData].
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: primaryLight,
+        secondary: accentColor,
+        error: errorColor,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF0D47A1),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      cardTheme: CardTheme(
+        color: const Color(0xFF1E1E1E),
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      dialogTheme: const DialogTheme(
+        backgroundColor: Color(0xFF2C2C2C),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Color(0xFF424242),
+        contentTextStyle: TextStyle(color: Colors.white),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   /// Returns the application's light [ThemeData].
   static ThemeData get lightTheme {
     return ThemeData(
@@ -199,7 +236,7 @@ class AppTheme {
       ),
 
       // Cards
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: cardColor,
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.08),
@@ -322,7 +359,7 @@ class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -357,5 +394,103 @@ class AppTheme {
         labelSmall: overline,
       ),
     );
+  }
+
+  // ── Status & Priority Helpers ──────────────────────────────────────────
+
+  /// Returns the color associated with a work order / machine status string.
+  static Color getStatusColor(String status) {
+    switch (status.toUpperCase().replaceAll(' ', '_')) {
+      case 'OPEN':
+        return statusOpen;
+      case 'IN_PROGRESS':
+        return statusInProgress;
+      case 'ON_HOLD':
+        return statusOnHold;
+      case 'COMPLETED':
+        return statusCompleted;
+      case 'CANCELLED':
+        return statusCancelled;
+      case 'VERIFIED':
+        return successColor;
+      case 'ACTIVE':
+        return successColor;
+      case 'INACTIVE':
+        return statusOnHold;
+      case 'UNDER_MAINTENANCE':
+        return statusInProgress;
+      case 'BROKEN_DOWN':
+        return statusCancelled;
+      case 'RETIRED':
+        return statusOnHold;
+      default:
+        return statusOpen;
+    }
+  }
+
+  /// Returns the display label for a work order / machine status string.
+  static String getStatusLabel(String status) {
+    switch (status.toUpperCase().replaceAll(' ', '_')) {
+      case 'OPEN':
+        return 'Open';
+      case 'IN_PROGRESS':
+        return 'In Progress';
+      case 'ON_HOLD':
+        return 'On Hold';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'CANCELLED':
+        return 'Cancelled';
+      case 'VERIFIED':
+        return 'Verified';
+      case 'ACTIVE':
+        return 'Active';
+      case 'INACTIVE':
+        return 'Inactive';
+      case 'UNDER_MAINTENANCE':
+        return 'Under Maintenance';
+      case 'BROKEN_DOWN':
+        return 'Broken Down';
+      case 'RETIRED':
+        return 'Retired';
+      default:
+        return status;
+    }
+  }
+
+  /// Returns the color associated with a work order priority string.
+  static Color getPriorityColor(String priority) {
+    switch (priority.toUpperCase()) {
+      case 'LOW':
+        return successColor;
+      case 'MEDIUM':
+        return statusOpen;
+      case 'HIGH':
+        return warningColor;
+      case 'CRITICAL':
+        return statusCancelled;
+      case 'URGENT':
+        return statusCancelled;
+      default:
+        return statusOnHold;
+    }
+  }
+
+  /// Returns the display label for a work order priority string.
+  static String getPriorityLabel(String priority) {
+    switch (priority.toUpperCase()) {
+      case 'LOW':
+        return 'Low';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'HIGH':
+        return 'High';
+      case 'CRITICAL':
+        return 'Critical';
+      case 'URGENT':
+        return 'Urgent';
+      default:
+        return priority;
+    }
   }
 }

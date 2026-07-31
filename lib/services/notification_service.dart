@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'supabase_service.dart';
 
 class NotificationService {
@@ -9,7 +9,6 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -19,27 +18,14 @@ class NotificationService {
   Stream<Map<String, dynamic>> get notificationStream =>
       _notificationController.stream;
 
-  String? _fcmToken;
-  String? get fcmToken => _fcmToken;
+  // FCM tidak digunakan di build ini (belum ada setup Firebase).
+  String? get fcmToken => null;
 
   bool _initialized = false;
 
-  /// Initialize Firebase Messaging and local notifications
+  /// Initialize local notifications
   Future<void> initialize() async {
     if (_initialized) return;
-
-    // Request permissions
-    await _requestPermissions();
-
-    // Get FCM token
-    _fcmToken = await _firebaseMessaging.getToken();
-    debugPrint('FCM Token: $_fcmToken');
-
-    // Listen for token refresh
-    _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      _fcmToken = newToken;
-      _updateFcmTokenOnServer(newToken);
-    });
 
     // Initialize local notifications
     const androidSettings =
@@ -59,73 +45,23 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // Handle notification taps when app is in background
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationOpened);
-
-    // Handle notification that launched the app
-    final initialMessage = await _firebaseMessaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNotificationOpened(initialMessage);
-    }
-
     _initialized = true;
   }
 
-  /// Request notification permissions
-  Future<void> _requestPermissions() async {
-    final messaging = _firebaseMessaging;
+  /// Show a local notification (dipakai untuk pengganti push notification).
+  Future<void> showNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    await _showLocalNotification(
+      id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title: title,
+      body: body,
+      payload: data != null ? jsonEncode(data) : null,
+    );
 
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final settings = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-      debugPrint('Notification permission: ${settings.authorizationStatus}');
-    } else {
-      // Android 13+ requires runtime permission
-      await messaging.requestPermission();
-    }
-  }
-
-  /// Update FCM token on the server
-  Future<void> _updateFcmTokenOnServer(String token) async {
-    try {
-      final user = SupabaseService().currentUser;
-      if (user != null) {
-        await SupabaseService().updateFcmToken(user.id, token);
-      }
-    } catch (e) {
-      debugPrint('Failed to update FCM token: $e');
-    }
-  }
-
-  /// Handle foreground message - show local notification
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    final notification = message.notification;
-    final data = message.data;
-
-    if (notification != null) {
-      await _showLocalNotification(
-        id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
-        title: notification.title ?? '',
-        body: notification.body ?? '',
-        payload: jsonEncode(data),
-      );
-    }
-
-    // Add to notification stream
-    _notificationController.add(data);
-  }
-
-  /// Handle notification opened from background
-  Future<void> _handleNotificationOpened(RemoteMessage message) async {
-    final data = message.data;
-    if (data.isNotEmpty) {
+    if (data != null && data.isNotEmpty) {
       _notificationController.add(data);
     }
   }
@@ -178,30 +114,12 @@ class NotificationService {
       'cmms_sigma_channel',
       'CMMS SIGMA Notifications',
       description: 'Work order and maintenance notifications',
-      importance: Importance.high,
     );
 
-    final plugin = FlutterLocalNotificationsPlugin();
-    await plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(
-      androidChannel,
-    );
-  }
-
-  /// Subscribe to a topic
-  Future<void> subscribeToTopic(String topic) async {
-    await _firebaseMessaging.subscribeToTopic(topic);
-  }
-
-  /// Unsubscribe from a topic
-  Future<void> unsubscribeFromTopic(String topic) async {
-    await _firebaseMessaging.unsubscribeFromTopic(topic);
-  }
-
-  /// Delete FCM token
-  Future<void> deleteToken() async {
-    await _firebaseMessaging.deleteToken();
-    _fcmToken = null;
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
   }
 
   /// Dispose

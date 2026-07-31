@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/machine_provider.dart';
 import '../providers/maintenance_history_provider.dart';
 import '../config/theme.dart';
-import '../models/machine_model.dart';
+import '../models/machine.dart';
 import '../models/work_order_model.dart';
 
 class MachineDetailScreen extends StatefulWidget {
@@ -164,7 +164,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
 }
 
 class _MachineInfoCard extends StatelessWidget {
-  final MachineModel machine;
+  final Machine machine;
 
   const _MachineInfoCard({required this.machine});
 
@@ -319,7 +319,7 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _QRCodeSection extends StatelessWidget {
-  final MachineModel machine;
+  final Machine machine;
 
   const _QRCodeSection({required this.machine});
 

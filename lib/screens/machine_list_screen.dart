@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/machine_provider.dart';
 import '../config/theme.dart';
-import '../models/machine_model.dart';
+import '../models/machine.dart';
 
 class MachineListScreen extends StatefulWidget {
   const MachineListScreen({super.key});
@@ -136,7 +136,7 @@ class _MachineListScreenState extends State<MachineListScreen> {
 }
 
 class _MachineCard extends StatelessWidget {
-  final MachineModel machine;
+  final Machine machine;
 
   const _MachineCard({required this.machine});
 
@@ -200,7 +200,7 @@ class _MachineCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Icon(
-                          Icons.forklift_outlined,
+                          Icons.precision_manufacturing_outlined,
                           size: 14,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
