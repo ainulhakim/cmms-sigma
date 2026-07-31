@@ -41,5 +41,11 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.1
 
+# app_links 6.4.1 merusak build Flutter 3.24 (referensi flutter.compileSdkVersion
+# tanpa menerapkan flutter-gradle-plugin). 6.4.0 pakai compileSdk 34 hardcoded.
+# supabase_flutter butuh app_links >=6.2.0 <8.0.0, jadi 6.4.0 aman.
+dependency_overrides:
+  app_links: 6.4.0
+
 flutter:
   uses-material-design: true
