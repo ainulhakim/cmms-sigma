@@ -4,7 +4,6 @@ import '../providers/work_order_provider.dart';
 import '../providers/auth_provider.dart';
 import '../config/theme.dart';
 import '../models/work_order.dart';
-import '../models/work_order_model.dart';
 
 class WorkOrderDetailScreen extends StatefulWidget {
   const WorkOrderDetailScreen({super.key});
@@ -44,9 +43,6 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Work Order'),
@@ -358,9 +354,8 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
                                     color: Colors.green.shade700,
                                   ),
                                 ),
-                                if (wo.supervisorNotes != null)
                                   Text(
-                                    wo.supervisorNotes!,
+                                    wo.supervisorNotes,
                                     style: TextStyle(
                                       color: Colors.green.shade600,
                                       fontSize: 12,

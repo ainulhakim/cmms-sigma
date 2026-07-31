@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/work_order_provider.dart';
 import '../config/theme.dart';
 import '../models/work_order.dart';
-import '../models/work_order_model.dart';
 
 class WorkOrderListScreen extends StatefulWidget {
   const WorkOrderListScreen({super.key});
@@ -38,8 +37,6 @@ class _WorkOrderListScreenState extends State<WorkOrderListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Work Order'),

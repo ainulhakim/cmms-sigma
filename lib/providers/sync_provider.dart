@@ -36,7 +36,7 @@ class SyncProvider extends ChangeNotifier {
   double? _syncProgress;
   double? get syncProgress => _syncProgress;
 
-  StreamSubscription? _syncStatusSubscription;
+  StreamSubscription<SyncStatus>? _syncStatusSubscription;
 
   /// Initialize the sync provider
   Future<void> initialize() async {

@@ -15,7 +15,7 @@ class SyncService {
   final SupabaseService _supabase = SupabaseService();
 
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription? _connectivitySubscription;
+  StreamSubscription<dynamic>? _connectivitySubscription;
 
   SyncStatus _status = SyncStatus.idle;
   SyncStatus get status => _status;

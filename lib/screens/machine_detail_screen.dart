@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/machine_provider.dart';
@@ -236,7 +235,7 @@ class _MachineInfoCard extends StatelessWidget {
             _InfoRow(
               icon: Icons.location_on_outlined,
               label: 'Lokasi',
-              value: machine.location ?? '-',
+              value: machine.location.isEmpty ? '-' : machine.location,
             ),
             const SizedBox(height: 12),
             _InfoRow(
