@@ -216,8 +216,14 @@ class AuthService {
     if (lower.contains('user already registered')) {
       return 'An account with this email already exists';
     }
+    if (lower.contains('password') && lower.contains('short')) {
+      return 'Password minimal 6 karakter';
+    }
+    if (lower.contains('password') && lower.contains('invalid')) {
+      return 'Email atau password salah';
+    }
     if (lower.contains('password')) {
-      return 'Password must be at least 6 characters';
+      return 'Error pada password: $error';
     }
     if (lower.contains('rate limit')) {
       return 'Too many attempts. Please try again later';

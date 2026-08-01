@@ -4,7 +4,7 @@
 -- ============================================================
 -- EXTENSIONS
 -- ============================================================
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- uuid-ossp not needed with gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- TABLE: machine_categories
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.machine_categories (
-  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name            TEXT NOT NULL,
   description     TEXT DEFAULT '',
   icon            TEXT DEFAULT '',
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.machine_categories (
 -- TABLE: machines
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.machines (
-  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_code    TEXT NOT NULL UNIQUE,
   machine_name    TEXT NOT NULL,
   machine_no      TEXT DEFAULT '',
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.machines (
 -- TABLE: maintenance_plans
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.maintenance_plans (
-  id                     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_id             UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   maintenance_name       TEXT NOT NULL,
   maintenance_type       maintenance_type NOT NULL DEFAULT 'preventive',
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS public.maintenance_plans (
 -- TABLE: maintenance_checklists
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.maintenance_checklists (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   maintenance_plan_id UUID NOT NULL REFERENCES public.maintenance_plans(id) ON DELETE CASCADE,
   item_name         TEXT NOT NULL,
   item_type         TEXT NOT NULL DEFAULT 'check' CHECK (item_type IN ('check', 'measure', 'text', 'yes_no', 'pass_fail')),
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS public.maintenance_checklists (
 -- TABLE: maintenance_schedules
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.maintenance_schedules (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   maintenance_plan_id UUID NOT NULL REFERENCES public.maintenance_plans(id) ON DELETE CASCADE,
   machine_id        UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   scheduled_date    DATE NOT NULL,
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS public.maintenance_schedules (
 -- TABLE: work_orders
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.work_orders (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   work_order_number TEXT NOT NULL UNIQUE,
   machine_id        UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   maintenance_plan_id UUID REFERENCES public.maintenance_plans(id) ON DELETE SET NULL,
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS public.work_orders (
 -- TABLE: work_order_checklist_results
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.work_order_checklist_results (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   work_order_id     UUID NOT NULL REFERENCES public.work_orders(id) ON DELETE CASCADE,
   checklist_item_id UUID REFERENCES public.maintenance_checklists(id) ON DELETE SET NULL,
   item_name         TEXT NOT NULL,
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS public.work_order_checklist_results (
 -- TABLE: work_order_photos
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.work_order_photos (
-  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   work_order_id   UUID NOT NULL REFERENCES public.work_orders(id) ON DELETE CASCADE,
   photo_url       TEXT NOT NULL,
   thumbnail_url   TEXT DEFAULT '',
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS public.work_order_photos (
 -- TABLE: breakdown_reports
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.breakdown_reports (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_id        UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   work_order_id     UUID REFERENCES public.work_orders(id) ON DELETE SET NULL,
   reported_by       UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS public.breakdown_reports (
 -- TABLE: spare_parts
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.spare_parts (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   part_code         TEXT NOT NULL UNIQUE,
   part_name         TEXT NOT NULL,
   description       TEXT DEFAULT '',
@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS public.spare_parts (
 -- TABLE: spare_part_transactions
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.spare_part_transactions (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   spare_part_id     UUID NOT NULL REFERENCES public.spare_parts(id) ON DELETE CASCADE,
   transaction_type  transaction_type NOT NULL,
   quantity          INTEGER NOT NULL,
@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS public.spare_part_transactions (
 -- TABLE: notifications
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.notifications (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id           UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title             TEXT NOT NULL,
   body              TEXT DEFAULT '',
@@ -273,7 +273,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- TABLE: sync_queue (offline changes tracking)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.sync_queue (
-  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   table_name        TEXT NOT NULL,
   record_id         UUID NOT NULL,
   operation         TEXT NOT NULL CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')),
