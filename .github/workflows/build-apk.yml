@@ -30,6 +30,33 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # qr_code_scanner 1.0.1 is unmaintained and missing 'namespace' + has
+      # Java 1.8 / Kotlin 1.8 defaults that break with AGP 8.x / Java 17.
+      # Patch it in the pub-cache so Gradle can resolve it.
+      - name: Patch qr_code_scanner plugin for AGP 8.x
+        run: |
+          QRS_BLD=$(find ~/.pub-cache -path "*/qr_code_scanner*/android/build.gradle" | head -1)
+          if [ -z "$QRS_BLD" ]; then
+            echo "⚠️  qr_code_scanner build.gradle not found – skipping patch"
+            exit 0
+          fi
+          echo "Patching $QRS_BLD"
+
+          # 1. Add namespace if missing
+          if ! grep -q 'namespace ' "$QRS_BLD"; then
+            sed -i '/^android {/a\    namespace "net.touchcapture.qr.flutterqr"' "$QRS_BLD"
+          fi
+
+          # 2. Replace Java 1.8 compileOptions with Java 17
+          sed -i 's/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' "$QRS_BLD"
+
+          # 3. Replace kotlinOptions jvmTarget 1.8 with 17
+          sed -i "s/jvmTarget = '1.8'/jvmTarget = '17'/" "$QRS_BLD"
+          sed -i 's/jvmTarget = "1.8"/jvmTarget = "17"/' "$QRS_BLD"
+
+          echo "--- Patched build.gradle ---"
+          cat "$QRS_BLD"
+
       - name: Build debug APK
         run: flutter build apk --debug
 
