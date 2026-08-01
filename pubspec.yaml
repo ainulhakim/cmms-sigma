@@ -1,7 +1,7 @@
 name: cmms_sigma
 description: CMMS SIGMA - Android Computerized Maintenance Management System
 publish_to: 'none'
-version: 1.0.5+6
+version: 1.0.6+7
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -23,6 +23,13 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   connectivity_plus: ^5.0.1
+
+  # HTTP client with progress tracking (for APK downloads)
+  dio: ^5.4.0
+
+  # For getting current app version and opening APK files
+  package_info_plus: ^8.0.0
+  open_filex: ^4.7.0
 
   # State management
   provider: ^6.1.1

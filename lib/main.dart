@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/app_config.dart';
 import 'services/database_service.dart';
 import 'services/sync_service.dart';
+import 'services/update_service.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
@@ -23,6 +24,7 @@ import 'screens/breakdown_report_screen.dart';
 import 'screens/maintenance_history_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/qr_scanner_screen.dart';
+import 'widgets/update_dialog.dart';
 
 /// Global flag so providers can check whether Supabase initialized OK.
 bool supabaseReady = false;
@@ -57,8 +59,37 @@ void main() async {
 }
 
 /// Root widget for CMMS SIGMA.
-class CmmsSigmaApp extends StatelessWidget {
+class CmmsSigmaApp extends StatefulWidget {
   const CmmsSigmaApp({super.key});
+
+  @override
+  State<CmmsSigmaApp> createState() => _CmmsSigmaAppState();
+}
+
+class _CmmsSigmaAppState extends State<CmmsSigmaApp> {
+  bool _updateChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Schedule update check after the first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdates();
+    });
+  }
+
+  /// Check for app updates in the background (non-blocking).
+  void _checkForUpdates() {
+    UpdateService.instance.checkForUpdate().then((updateInfo) {
+      if (updateInfo != null && mounted && !_updateChecked) {
+        _updateChecked = true;
+        debugPrint('📱 Update available: v${updateInfo.latestVersion}');
+        UpdateDialog.show(context, updateInfo);
+      }
+    }).catchError((e) {
+      debugPrint('⚠️ Update check error (non-critical): $e');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

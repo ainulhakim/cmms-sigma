@@ -9,7 +9,7 @@ class AppConfig {
   static const String appName = 'CMMS SIGMA';
 
   /// The application version string.
-  static const String appVersion = '1.0.5';
+  static const String appVersion = '1.0.6';
 
   /// Supabase project URL.
   static const String supabaseUrl = 'https://gfficbusjlvrifjlatvr.supabase.co';
