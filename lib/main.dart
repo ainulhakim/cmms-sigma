@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/app_config.dart';
+import 'services/database_service.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
@@ -24,6 +25,9 @@ import 'screens/qr_scanner_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ── Initialize local database for offline support ────────────────────
+  await DatabaseService().initialize();
 
   // ── Initialize Supabase ──────────────────────────────────────────────
   try {

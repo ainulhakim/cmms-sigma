@@ -40,30 +40,26 @@ class MachineProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_syncService.isOnline && forceRefresh) {
-        final remoteMachines = await _supabase.getMachines();
-        _machines = remoteMachines;
-        // Cache locally
-        await _db.batchInsert(
-          'machines',
-          remoteMachines.map((m) => m.toMap()).toList(),
-          clearTableFirst: true,
-        );
-      } else {
-        // Try local DB first
-        final localData = await _db.query('machines', orderBy: 'created_at DESC');
-        if (localData.isNotEmpty) {
-          _machines = localData.map((map) => Machine.fromMap(map)).toList();
-        } else if (_syncService.isOnline) {
-          // If local empty but online, fetch from server
+      if (_syncService.isOnline) {
+        // Always try Supabase when online
+        try {
           final remoteMachines = await _supabase.getMachines();
           _machines = remoteMachines;
+          // Cache locally
           await _db.batchInsert(
             'machines',
             remoteMachines.map((m) => m.toMap()).toList(),
             clearTableFirst: true,
           );
+        } catch (e) {
+          // Fallback to local on network error
+          final localData = await _db.query('machines', orderBy: 'created_at DESC');
+          _machines = localData.map((map) => Machine.fromMap(map)).toList();
         }
+      } else {
+        // Offline: use cached local data
+        final localData = await _db.query('machines', orderBy: 'created_at DESC');
+        _machines = localData.map((map) => Machine.fromMap(map)).toList();
       }
     } catch (e) {
       _errorMessage = e.toString();
