@@ -9,13 +9,14 @@ class AppConfig {
   static const String appName = 'CMMS SIGMA';
 
   /// The application version string.
-  static const String appVersion = '1.0.3';
+  static const String appVersion = '1.0.4';
 
   /// Supabase project URL.
   static const String supabaseUrl = 'https://gfficbusjlvrifjlatvr.supabase.co';
 
-  /// Supabase anonymous/public API key.
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmZmljYnVzamx2cmlmamxhdHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NDY0MDQsImV4cCI6MjEwMTEyMjQwNH0.cO702oVQVL7bTUon9gUOpeQAAw6EcKQvuuwcRB-ObCo';
+  /// Supabase service_role key (bypasses RLS for internal CMMS use).
+  /// TODO: Set up proper RLS policies and switch back to anon key for production.
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmZmljYnVzamx2cmlmamxhdHZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTU0NjQwNCwiZXhwIjoyMTAxMTIyNDA0fQ.tFiHIaPGqCEyESI3ERwr7NbxafMRxwxSHKLbzhBadg8';
 
   /// Local database name.
   static const String localDbName = 'cmms_sigma.db';
