@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/work_order_provider.dart';
+import '../services/supabase_service.dart';
+import '../models/work_order_checklist.dart';
 
 class ChecklistFormScreen extends StatefulWidget {
   final String workOrderId;
@@ -317,7 +319,7 @@ class _ChecklistFormScreenState extends State<ChecklistFormScreen> {
     );
   }
 
-  void _handleSave() {
+  void _handleSave() async {
     final provider = context.read<WorkOrderProvider>();
     final wo = provider.selectedWorkOrder;
 
@@ -334,13 +336,43 @@ class _ChecklistFormScreenState extends State<ChecklistFormScreen> {
       }
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Checklist berhasil disimpan'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Save results to Supabase
+    try {
+      final results = wo.checklistItems.map((item) {
+        return WorkOrderChecklistResult(
+          id: '',
+          workOrderId: widget.workOrderId,
+          checklistItemId: item.id,
+          itemName: item.name,
+          isPassed: item.isChecked,
+          resultValue: item.measurementValue ?? '',
+          notes: item.notes ?? '',
+        );
+      }).toList();
 
-    Navigator.pop(context, wo.checklistItems);
+      final service = SupabaseService();
+      await service.saveChecklistResults(results.cast<WorkOrderChecklistResult>());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Checklist berhasil disimpan'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, wo.checklistItems);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }

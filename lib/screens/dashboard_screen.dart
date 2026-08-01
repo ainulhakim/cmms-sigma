@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/machine_provider.dart';
+import '../services/supabase_service.dart';
+import '../models/work_order.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,13 +15,31 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
-
+  List<WorkOrder> _recentWorkOrders = [];
+  bool _loadingActivity = false;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DashboardProvider>().loadDashboardData();
+      _loadRecentActivity();
     });
+  }
+
+  Future<void> _loadRecentActivity() async {
+    setState(() => _loadingActivity = true);
+    try {
+      final service = SupabaseService();
+      final orders = await service.getWorkOrders(pageSize: 5);
+      if (mounted) {
+        setState(() {
+          _recentWorkOrders = orders;
+          _loadingActivity = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loadingActivity = false);
+    }
   }
 
   @override
@@ -189,12 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.qr_code_scanner_rounded,
                       label: 'Scan\nQR Mesin',
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Fitur scan QR segera hadir'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        Navigator.pushNamed(context, '/qr-scanner');
                       },
                     ),
                   ),
@@ -218,29 +234,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              _ActivityItem(
-                title: 'WO-2026-0002 dimulai',
-                subtitle: 'Mesin Injection Molding - Perbaikan Pemanas',
-                time: '30 menit lalu',
-                icon: Icons.play_circle_filled,
-                iconColor: Colors.blue,
-              ),
-              const SizedBox(height: 8),
-              _ActivityItem(
-                title: 'WO-2026-0003 selesai',
-                subtitle: 'Mesin CNC Milling - Kalibrasi Sumbu X',
-                time: '2 jam lalu',
-                icon: Icons.check_circle,
-                iconColor: Colors.green,
-              ),
-              const SizedBox(height: 8),
-              _ActivityItem(
-                title: 'WO-2026-0004 dibuat',
-                subtitle: 'Kompresor Udara - Overhaul Kompresor',
-                time: '1 hari lalu',
-                icon: Icons.add_circle,
-                iconColor: Colors.orange,
-              ),
+              if (_loadingActivity)
+                const Center(child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(),
+                ))
+              else if (_recentWorkOrders.isEmpty)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: Text(
+                        'Belum ada aktivitas',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ..._recentWorkOrders.map((wo) {
+                  IconData icon;
+                  Color iconColor;
+                  String subtitle;
+                  if (wo.status == 'COMPLETED' || wo.status == 'VERIFIED') {
+                    icon = Icons.check_circle;
+                    iconColor = Colors.green;
+                    subtitle = '${wo.machineName ?? wo.machineCode} - Selesai';
+                  } else if (wo.status == 'IN_PROGRESS') {
+                    icon = Icons.play_circle_filled;
+                    iconColor = Colors.blue;
+                    subtitle = '${wo.machineName ?? wo.machineCode} - Berjalan';
+                  } else {
+                    icon = Icons.add_circle;
+                    iconColor = Colors.orange;
+                    subtitle = '${wo.machineName ?? wo.machineCode} - ${wo.problemDescription.isNotEmpty ? wo.problemDescription : wo.title}';
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _ActivityItem(
+                      title: '${wo.woNumber} - ${wo.status == 'OPEN' ? 'Dibuat' : wo.status == 'IN_PROGRESS' ? 'Dimulai' : wo.status == 'COMPLETED' ? 'Selesai' : wo.status}',
+                      subtitle: subtitle,
+                      time: wo.createdAt != null ? _formatTimeAgo(wo.createdAt!) : '',
+                      icon: icon,
+                      iconColor: iconColor,
+                    ),
+                  );
+                }),
             ],
           ),
         );
@@ -252,6 +291,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return const Center(
       child: Text('Pilih menu dari navigasi bawah'),
     );
+  }
+
+  String _formatTimeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+    final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
 

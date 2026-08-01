@@ -1,7 +1,7 @@
 name: cmms_sigma
 description: CMMS SIGMA - Android Computerized Maintenance Management System
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -27,8 +27,9 @@ dependencies:
   # State management
   provider: ^6.1.1
 
-  # QR Code scanning
-  qr_code_scanner: ^1.0.1
+  # QR Code scanning & generation
+  mobile_scanner: ^5.2.1
+  qr_flutter: ^4.1.0
 
   # Permissions
   permission_handler: ^11.1.0

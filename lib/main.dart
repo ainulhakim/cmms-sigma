@@ -20,6 +20,7 @@ import 'screens/checklist_form_screen.dart';
 import 'screens/breakdown_report_screen.dart';
 import 'screens/maintenance_history_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/qr_scanner_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,6 +72,7 @@ class CmmsSigmaApp extends StatelessWidget {
               '/breakdown-report': (_) => const BreakdownReportScreen(),
               '/maintenance-history': (_) => const MaintenanceHistoryScreen(),
               '/profile': (_) => const ProfileScreen(),
+              '/qr-scanner': (_) => const QrScannerScreen(),
             },
             onGenerateRoute: (RouteSettings settings) {
               final Uri uri = Uri.parse(settings.name ?? '');

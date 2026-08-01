@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../providers/machine_provider.dart';
 import '../providers/maintenance_history_provider.dart';
 import '../config/theme.dart';
@@ -350,10 +351,18 @@ class _QRCodeSection extends StatelessWidget {
                 ),
               ),
               child: Center(
-                child: Icon(
-                  Icons.qr_code_rounded,
-                  size: 80,
-                  color: Colors.black87,
+                child: QrImageView(
+                  data: 'machine:${machine.id}',
+                  version: QrVersions.auto,
+                  size: 100,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: Colors.black87,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ),
