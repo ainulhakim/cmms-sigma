@@ -1,7 +1,7 @@
 name: cmms_sigma
 description: CMMS SIGMA - Android Computerized Maintenance Management System
 publish_to: 'none'
-version: 1.0.4+5
+version: 1.0.5+6
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -36,7 +36,6 @@ dependencies:
 
   # Local notifications
   flutter_local_notifications: ^17.0.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -3,11 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 import '../models/work_order_model.dart';
 
 class DashboardProvider extends ChangeNotifier {
   final SupabaseService _supabase = SupabaseService();
   final DatabaseService _db = DatabaseService();
+  final SyncService _syncService = SyncService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -101,21 +103,27 @@ class DashboardProvider extends ChangeNotifier {
   /// Load all dashboard data
   Future<void> loadDashboardData() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      // Fetch from Supabase
-      final stats = await _supabase.getDashboardStats();
+      if (_syncService.isOnline) {
+        // Fetch from Supabase
+        final stats = await _supabase.getDashboardStats();
 
-      _totalMachines = stats['totalMachines'] as int? ?? 0;
-      _activeMachines = stats['activeMachines'] as int? ?? 0;
-      _openWorkOrders = stats['openWorkOrders'] as int? ?? 0;
-      _inProgressWorkOrders = stats['inProgressWorkOrders'] as int? ?? 0;
-      _completedWorkOrdersToday = stats['completedToday'] as int? ?? 0;
-      _unreadNotifications = stats['unreadNotifications'] as int? ?? 0;
+        _totalMachines = stats['totalMachines'] as int? ?? 0;
+        _activeMachines = stats['activeMachines'] as int? ?? 0;
+        _openWorkOrders = stats['openWorkOrders'] as int? ?? 0;
+        _inProgressWorkOrders = stats['inProgressWorkOrders'] as int? ?? 0;
+        _completedWorkOrdersToday = stats['completedToday'] as int? ?? 0;
+        _unreadNotifications = stats['unreadNotifications'] as int? ?? 0;
 
-      // Fetch extra stats
-      await _loadExtraStats();
+        // Fetch extra stats
+        await _loadExtraStats();
+      } else {
+        // Offline: load from local DB
+        await _loadFromLocal();
+      }
     } catch (e) {
       _errorMessage = e.toString();
       // Try loading from local DB as fallback
@@ -176,14 +184,14 @@ class DashboardProvider extends ChangeNotifier {
 
       // Monthly work order stats
       await _loadMonthlyStats();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('DashboardProvider _loadExtraStats error: $e');
+    }
   }
 
   /// Load monthly work order statistics for charts
   Future<void> _loadMonthlyStats() async {
     try {
-      // This would be a more complex query in production
-      // For now, get last 6 months
       final sixMonthsAgo = DateTime.now()
           .subtract(const Duration(days: 180))
           .toIso8601String();
@@ -218,7 +226,9 @@ class DashboardProvider extends ChangeNotifier {
       _workOrdersByStatus = statusMap.entries
           .map((e) => {'status': e.key, 'count': e.value})
           .toList();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('DashboardProvider _loadMonthlyStats error: $e');
+    }
   }
 
   /// Load from local database as fallback
@@ -247,7 +257,9 @@ class DashboardProvider extends ChangeNotifier {
 
       _machinesUnderMaintenance = await _db.count('machines',
           where: 'status = ?', whereArgs: ['under_maintenance']);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('DashboardProvider _loadFromLocal error: $e');
+    }
   }
 
   /// Refresh dashboard data

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/app_config.dart';
 import 'services/database_service.dart';
+import 'services/sync_service.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
@@ -23,6 +24,9 @@ import 'screens/maintenance_history_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/qr_scanner_screen.dart';
 
+/// Global flag so providers can check whether Supabase initialized OK.
+bool supabaseReady = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -35,8 +39,18 @@ void main() async {
       url: AppConfig.supabaseUrl,
       anonKey: AppConfig.supabaseAnonKey,
     );
+    supabaseReady = true;
+    debugPrint('✅ Supabase initialized OK');
   } catch (e) {
-    debugPrint('Supabase init skipped (dev mode): $e');
+    supabaseReady = false;
+    debugPrint('⚠️ Supabase init failed: $e');
+  }
+
+  // ── Initialize connectivity / sync service ───────────────────────────
+  try {
+    await SyncService().initialize();
+  } catch (e) {
+    debugPrint('⚠️ SyncService init failed (non-critical): $e');
   }
 
   runApp(const CmmsSigmaApp());

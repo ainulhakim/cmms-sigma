@@ -74,48 +74,73 @@ class WorkOrderProvider extends ChangeNotifier {
 
     try {
       if (_syncService.isOnline) {
-        final remoteOrders = await _supabase.getWorkOrders(
-          status: _statusFilter,
-          assignedUserId: assignedUserId,
-          page: _currentPage,
-          pageSize: 20,
-        );
+        try {
+          final remoteOrders = await _supabase.getWorkOrders(
+            status: _statusFilter,
+            assignedUserId: assignedUserId,
+            page: _currentPage,
+            pageSize: 20,
+          );
 
-        if (refresh) {
-          _workOrders = remoteOrders;
-        } else {
-          _workOrders.addAll(remoteOrders);
+          if (refresh || _currentPage == 0) {
+            _workOrders = remoteOrders;
+          } else {
+            _workOrders.addAll(remoteOrders);
+          }
+
+          _hasMore = remoteOrders.length >= 20;
+          if (!refresh && remoteOrders.isNotEmpty) {
+            _currentPage++;
+          }
+
+          // Cache locally
+          if (remoteOrders.isNotEmpty) {
+            await _db.batchInsert(
+              'work_orders',
+              remoteOrders.map((wo) => wo.toMap()).toList(),
+              clearTableFirst: refresh,
+            );
+          }
+        } catch (e) {
+          debugPrint('WorkOrderProvider: Supabase fetch failed ($e), using local');
+          // Fallback to local
+          try {
+            final localData = await _db.query(
+              'work_orders',
+              where: _statusFilter != null ? 'status = ?' : null,
+              whereArgs: _statusFilter != null ? [_statusFilter] : null,
+              orderBy: 'created_at DESC',
+              limit: 20,
+              offset: _currentPage * 20,
+            );
+            _workOrders = localData.map((map) => WorkOrder.fromMap(map)).toList();
+            _hasMore = localData.length >= 20;
+          } catch (_) {
+            _workOrders = [];
+          }
         }
-
-        _hasMore = remoteOrders.length >= 20;
-        if (!refresh) {
-          _currentPage++;
-        }
-
-        // Cache locally
-        await _db.batchInsert(
-          'work_orders',
-          remoteOrders.map((wo) => wo.toMap()).toList(),
-          clearTableFirst: refresh,
-        );
       } else {
         // Load from local DB
-        final localData = await _db.query(
-          'work_orders',
-          where: _statusFilter != null ? 'status = ?' : null,
-          whereArgs: _statusFilter != null ? [_statusFilter] : null,
-          orderBy: 'created_at DESC',
-          limit: 20,
-          offset: _currentPage * 20,
-        );
-        _workOrders = localData.map((map) => WorkOrder.fromMap(map)).toList();
-        _hasMore = localData.length >= 20;
+        try {
+          final localData = await _db.query(
+            'work_orders',
+            where: _statusFilter != null ? 'status = ?' : null,
+            whereArgs: _statusFilter != null ? [_statusFilter] : null,
+            orderBy: 'created_at DESC',
+            limit: 20,
+            offset: _currentPage * 20,
+          );
+          _workOrders = localData.map((map) => WorkOrder.fromMap(map)).toList();
+          _hasMore = localData.length >= 20;
+        } catch (_) {
+          _workOrders = [];
+        }
       }
 
       // Compute summary counts
       await _loadSummaryCounts(assignedUserId: assignedUserId);
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = 'Gagal memuat work order: ${e.toString()}';
       // Fallback to local
       try {
         final localData = await _db.query(
@@ -157,54 +182,77 @@ class WorkOrderProvider extends ChangeNotifier {
   /// Load a single work order with details
   Future<void> loadWorkOrderDetail(String id) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
       if (_syncService.isOnline) {
-        _selectedWorkOrder = await _supabase.getWorkOrder(id);
-      } else {
-        final localData = await _db.getById('work_orders', id);
-        if (localData != null) {
-          _selectedWorkOrder = WorkOrder.fromMap(localData);
+        try {
+          _selectedWorkOrder = await _supabase.getWorkOrder(id);
+        } catch (e) {
+          debugPrint('loadWorkOrderDetail Supabase failed: $e');
         }
+      }
+
+      // Fallback to local if online didn't return result
+      if (_selectedWorkOrder == null) {
+        try {
+          final localData = await _db.getById('work_orders', id);
+          if (localData != null) {
+            _selectedWorkOrder = WorkOrder.fromMap(localData);
+          }
+        } catch (_) {}
       }
 
       // Load checklist results
       if (_syncService.isOnline) {
-        _checklistResults = await _supabase.getChecklistResults(id);
-        // Cache locally
-        await _db.batchInsert(
-          'work_order_checklist_results',
-          _checklistResults.map((r) => r.toMap()).toList(),
-          clearTableFirst: true,
-        );
-      } else {
-        final localChecklist = await _db.query(
-          'work_order_checklist_results',
-          where: 'work_order_id = ?',
-          whereArgs: [id],
-        );
-        _checklistResults = localChecklist
-            .map((map) => WorkOrderChecklistResult.fromMap(map))
-            .toList();
+        try {
+          _checklistResults = await _supabase.getChecklistResults(id);
+          if (_checklistResults.isNotEmpty) {
+            await _db.batchInsert(
+              'work_order_checklist_results',
+              _checklistResults.map((r) => r.toMap()).toList(),
+              clearTableFirst: true,
+            );
+          }
+        } catch (_) {}
+      }
+      if (_checklistResults.isEmpty) {
+        try {
+          final localChecklist = await _db.query(
+            'work_order_checklist_results',
+            where: 'work_order_id = ?',
+            whereArgs: [id],
+          );
+          _checklistResults = localChecklist
+              .map((map) => WorkOrderChecklistResult.fromMap(map))
+              .toList();
+        } catch (_) {}
       }
 
       // Load photos
       if (_syncService.isOnline) {
-        _photos = await _supabase.getWorkOrderPhotos(id);
-        await _db.batchInsert(
-          'work_order_photos',
-          _photos.map((p) => p.toMap()).toList(),
-          clearTableFirst: true,
-        );
-      } else {
-        final localPhotos = await _db.query(
-          'work_order_photos',
-          where: 'work_order_id = ?',
-          whereArgs: [id],
-        );
-        _photos =
-            localPhotos.map((map) => WorkOrderPhoto.fromMap(map)).toList();
+        try {
+          _photos = await _supabase.getWorkOrderPhotos(id);
+          if (_photos.isNotEmpty) {
+            await _db.batchInsert(
+              'work_order_photos',
+              _photos.map((p) => p.toMap()).toList(),
+              clearTableFirst: true,
+            );
+          }
+        } catch (_) {}
+      }
+      if (_photos.isEmpty) {
+        try {
+          final localPhotos = await _db.query(
+            'work_order_photos',
+            where: 'work_order_id = ?',
+            whereArgs: [id],
+          );
+          _photos =
+              localPhotos.map((map) => WorkOrderPhoto.fromMap(map)).toList();
+        } catch (_) {}
       }
     } catch (e) {
       _errorMessage = e.toString();

@@ -46,23 +46,34 @@ class MachineProvider extends ChangeNotifier {
           final remoteMachines = await _supabase.getMachines();
           _machines = remoteMachines;
           // Cache locally
-          await _db.batchInsert(
-            'machines',
-            remoteMachines.map((m) => m.toMap()).toList(),
-            clearTableFirst: true,
-          );
+          if (remoteMachines.isNotEmpty) {
+            await _db.batchInsert(
+              'machines',
+              remoteMachines.map((m) => m.toMap()).toList(),
+              clearTableFirst: true,
+            );
+          }
         } catch (e) {
+          debugPrint('MachineProvider: Supabase fetch failed ($e), using local');
           // Fallback to local on network error
-          final localData = await _db.query('machines', orderBy: 'created_at DESC');
-          _machines = localData.map((map) => Machine.fromMap(map)).toList();
+          try {
+            final localData = await _db.query('machines', orderBy: 'created_at DESC');
+            _machines = localData.map((map) => Machine.fromMap(map)).toList();
+          } catch (_) {
+            _machines = [];
+          }
         }
       } else {
         // Offline: use cached local data
-        final localData = await _db.query('machines', orderBy: 'created_at DESC');
-        _machines = localData.map((map) => Machine.fromMap(map)).toList();
+        try {
+          final localData = await _db.query('machines', orderBy: 'created_at DESC');
+          _machines = localData.map((map) => Machine.fromMap(map)).toList();
+        } catch (_) {
+          _machines = [];
+        }
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = 'Gagal memuat data mesin: ${e.toString()}';
       // Fallback to local data
       try {
         final localData = await _db.query('machines', orderBy: 'created_at DESC');
@@ -200,14 +211,26 @@ class MachineProvider extends ChangeNotifier {
     try {
       if (_syncService.isOnline) {
         _selectedMachine = await _supabase.getMachine(id);
-      } else {
+      }
+
+      // Fallback to local if online didn't return result
+      if (_selectedMachine == null) {
+        try {
+          final localData = await _db.getById('machines', id);
+          if (localData != null) {
+            _selectedMachine = Machine.fromMap(localData);
+          }
+        } catch (_) {}
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      // Fallback to local
+      try {
         final localData = await _db.getById('machines', id);
         if (localData != null) {
           _selectedMachine = Machine.fromMap(localData);
         }
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
+      } catch (_) {}
     }
     _isLoading = false;
     notifyListeners();

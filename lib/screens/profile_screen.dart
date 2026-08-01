@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -20,8 +21,8 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () {
               showAboutDialog(
                 context: context,
-                applicationName: 'CMMS SIGMA',
-                applicationVersion: '1.0.0',
+                applicationName: AppConfig.appName,
+                applicationVersion: AppConfig.appVersion,
                 applicationLegalese: '© 2026 PT Sigma',
                 children: [
                   const Text('Sistem Manajemen Perawatan Mesin'),
@@ -273,7 +274,7 @@ class ProfileScreen extends StatelessWidget {
               // App Version
               Center(
                 child: Text(
-                  'CMMS SIGMA v1.0.0',
+                  'CMMS SIGMA v${AppConfig.appVersion}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
