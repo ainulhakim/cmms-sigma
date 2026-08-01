@@ -93,6 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'v1.0.1',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    ),
+                  ),
                   const SizedBox(height: 40),
 
                   // Email Field
